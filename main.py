@@ -11,9 +11,13 @@ https://github.com/yinguobing/head-pose-estimation
 from argparse import ArgumentParser
 
 import cv2
+import numpy as np
 
 from mark_detector import MarkDetector
 from pose_estimator import PoseEstimator
+
+import UdpComms as U
+import time
 
 print(__doc__)
 print("OpenCV version: {}".format(cv2.__version__))
@@ -28,6 +32,9 @@ args = parser.parse_args()
 
 
 if __name__ == '__main__':
+    # Create UDP socket to use for sending (and receiving)
+    sock = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001, enableRX=True, suppressWarnings=True)
+
     # Before estimation started, there are some startup works to do.
 
     # 1. Setup the video source from webcam or video file.
@@ -91,17 +98,38 @@ if __name__ == '__main__':
             # pose on the frame in realtime.
 
             # Do you want to see the pose annotation?
-            pose_estimator.draw_annotation_box(
-                frame, pose[0], pose[1], color=(0, 255, 0))
+            # pose_estimator.draw_annotation_box(
+            #    frame, pose[0], pose[1], color=(0, 255, 0))
 
             # Do you want to see the head axes?
             # pose_estimator.draw_axes(frame, pose[0], pose[1])
 
+            # print(pose[0])
             # Do you want to see the marks?
             # mark_detector.draw_marks(frame, marks, color=(0, 255, 0))
 
+            r_mat, _ = cv2.Rodrigues(pose[0])
+            p_mat = np.hstack((r_mat, np.array([[0], [0], [0]])))
+            _, _, _, _, _, _, u_angle = cv2.decomposeProjectionMatrix(p_mat)
+            pitch, yaw, roll = u_angle.flatten()
+
+            if roll > 0:
+                roll = 180 - roll
+            elif roll < 0:
+                roll = -(180 + roll)
+
+            print("pitch: {:.2f}, yaw: {:.2f}, roll: {:.2f}".format(pitch, yaw, roll))
             # Do you want to see the facebox?
             # mark_detector.draw_box(frame, [facebox])
+
+            # Network connection
+            sock.SendData(str(roll))  # Send this string to other application
+            data = sock.ReadReceivedData()  # read data
+
+            if data != None:  # if NEW data has been received since last ReadReceivedData function call
+                print(data)  # print new received data
+
+            time.sleep(1)
 
         # Show preview.
         cv2.imshow("Preview", frame)
