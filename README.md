@@ -67,8 +67,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Authors
 Yin Guobing (尹国冰) - [yinguobing](https://yinguobing.com)
 
-![](doc/wechat_logo.png)
-
 ## Acknowledgments
 The pre-trained TensorFlow model file is trained with various public data sets which have their own licenses. Please refer to them before using this code.
 
