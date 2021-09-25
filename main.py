@@ -8,6 +8,7 @@ There are three major steps:
 To find more details, please refer to:
 https://github.com/yinguobing/head-pose-estimation
 """
+import json
 from argparse import ArgumentParser
 
 import cv2
@@ -98,8 +99,8 @@ if __name__ == '__main__':
             # pose on the frame in realtime.
 
             # Do you want to see the pose annotation?
-            # pose_estimator.draw_annotation_box(
-            #    frame, pose[0], pose[1], color=(0, 255, 0))
+            pose_estimator.draw_annotation_box(
+               frame, pose[0], pose[1], color=(0, 255, 0))
 
             # Do you want to see the head axes?
             # pose_estimator.draw_axes(frame, pose[0], pose[1])
@@ -118,18 +119,29 @@ if __name__ == '__main__':
             elif roll < 0:
                 roll = -(180 + roll)
 
-            print("pitch: {:.2f}, yaw: {:.2f}, roll: {:.2f}".format(pitch, yaw, roll))
+            # print("pitch: {:.2f}, yaw: {:.2f}, roll: {:.2f}".format(pitch, yaw, roll))
             # Do you want to see the facebox?
             # mark_detector.draw_box(frame, [facebox])
 
             # Network connection
-            sock.SendData(str(roll))  # Send this string to other application
+            head_data = json.dumps(
+                {
+                    "pitch": pitch,
+                    "yaw": yaw,
+                    "roll": roll
+                }
+            )
+
+            sock.SendData(str(head_data))
+
+            # sock.SendData(str(yaw))  # Send this string to other application
+            # sock.SendData(str(pitch))
             data = sock.ReadReceivedData()  # read data
 
             if data != None:  # if NEW data has been received since last ReadReceivedData function call
                 print(data)  # print new received data
 
-            time.sleep(1)
+            # time.sleep(0.1)
 
         # Show preview.
         cv2.imshow("Preview", frame)
